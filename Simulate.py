@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def simulate_risk_data(sample_size, complete_dataset_path, training_data_path, db_name):
+def simulate_risk_data(sample_size, db_name):
     import pandas as pd
     import numpy as np
     from sqlalchemy import create_engine
@@ -164,7 +164,7 @@ def simulate_risk_data(sample_size, complete_dataset_path, training_data_path, d
     )
 
     pd_prob = expit(log_odds)
-    pd_prob += np.random.normal(0.0, 0.1, 100000)
+    pd_prob += np.random.normal(0.0, 0.1, N)
     pd_prob = pd_prob.clip(0,1)
  
     default = np.random.binomial(1, pd_prob, N)
@@ -193,32 +193,57 @@ def simulate_risk_data(sample_size, complete_dataset_path, training_data_path, d
     df['Age'] = age
     df['Employed'] = employed
     df['Income'] = income
+
+    df['Age and Income Interaction'] = age * income
+    df['Employment and Income Interaction'] = employed * income
     df['Debt'] = debt
+    df['Debt and Employment Interaction'] = debt*employed
     df['Debt to Income'] = debt/income
     df['Utilization Rate'] = utilization
+    df['Utilization and Debt and Income Interaction'] = debt/income * utilization
     df['LTV'] = ltv
     df['Risk Rating'] = risk_rating
     df['Fico'] = fico
+    df['Utilization and Risk Rating Interaction'] = utilization * risk_rating
+    df['Utilization and Fico Interaction'] = utilization * fico
+    df['LTV Fico Interaction'] = ltv*fico
+    df['Risk Rating Fico Interaction'] = risk_rating * fico
+    df['Fico and Income Interaction'] = fico*income
     df['Balance'] = loan_balance
+    df['Balance and Risk Rating Interaction'] = loan_balance * risk_rating
+    df['Balance and FICO Interaction'] = loan_balance * fico
+    df['Balance and Debt Interaction'] = loan_balance * debt
     df['Default'] = default
-    df['Delinquent Balance'] = delinquent_balance
 
 
-    df.to_csv(complete_dataset_path, index=False)
+    loan_id = 1
+
+    ids = []
+
+    for x in range(len(delinquent_balance)):
+
+        ids.append(loan_id)
+        loan_id +=1
+
+    df['Loan ID'] = ids
+
+
+    #df.to_csv(complete_dataset_path, index=False)
 
     engine_path = "sqlite:///" + db_name + ".db"
 
     engine = create_engine(engine_path)
 
-    df = pd.read_csv(complete_dataset_path, index_col=False)
+    #df = pd.read_csv(complete_dataset_path, index_col=False)
 
-    df = df.drop(['Default', 'Delinquent Balance'], axis=1)
+    df.to_sql("CreditRiskCompleteData", engine, if_exists="replace", index=False)
 
-    df.to_sql("CreditRisk", engine, if_exists="replace", index=False)
-    df.to_csv(training_data_path)
+    df = df.drop(['Loan ID','Default'], axis=1)
+
+    df.to_sql("CreditRiskTrainingData", engine, if_exists="replace", index=False)
     
 
     print(f"Done! {len(df)} rows inserted.")
 
-    df = pd.read_sql("SELECT * FROM CreditRisk", engine)
+    df = pd.read_sql("SELECT * FROM CreditRiskTrainingData", engine)
     print(df)
