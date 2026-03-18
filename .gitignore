@@ -1,0 +1,8 @@
+# Ignore Chroma DB and model files
+credit_risk_db/
+CredRiskDB.db
+*.pkl
+*.md
+*.db
+*.json
+*.csv
