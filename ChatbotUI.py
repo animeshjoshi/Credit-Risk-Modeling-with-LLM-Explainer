@@ -65,8 +65,8 @@ if user_input:
         # Call RAG system
         from sklearn.feature_extraction.text import TfidfVectorizer
         import joblib
-        clf = joblib.load("query_classifier.pkl")
-        vectorizer = joblib.load("query_vectorizer.pkl")
+        clf = joblib.load("models/query_classifier.pkl")
+        vectorizer = joblib.load("models/query_vectorizer.pkl")
         X_new = vectorizer.transform([user_input])
         predicted_label = clf.predict(X_new)[0]
         answer = rag_system(conversation, collection, document_type=predicted_label, n_chunks=8)
