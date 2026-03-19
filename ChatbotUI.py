@@ -9,7 +9,7 @@ import chromadb
 @st.cache_resource
 def load_collection():
     client = chromadb.PersistentClient(path="credit_risk_db")
-    collection = client.get_collection(name="credit_risk")
+    collection = client.get_or_create_collection(name="credit_risk")
     return collection
 
 collection = load_collection()
